@@ -50,6 +50,12 @@ spec:
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
+            },
+            {
+              "name": "arbeidsgiver.rekrutteringsbistand-stilling-1",
+              "location": "AIVEN",
+              "keyDeserializerType": "STRING",
+              "valueDeserializerType": "AVRO"
             }
           ]
         }
