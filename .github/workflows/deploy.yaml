@@ -1,4 +1,4 @@
-name: Deploy kafka-manager to dev
+name: Deploy kafkamanager to dev
 
 on:
   push:
@@ -6,8 +6,8 @@ on:
       - main
 
 jobs:
-  deploy-kafka-manager-to-dev:
-    name: Deploy kafka manager to dev
+  deploy-kafkamanager-to-dev:
+    name: Deploy kafkamanager to dev
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -15,4 +15,4 @@ jobs:
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: dev-gcp
-          RESOURCE: kafka-manager.yml
+          RESOURCE: nais.yaml

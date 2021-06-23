@@ -1,7 +1,7 @@
 kind: Application
 apiVersion: nais.io/v1alpha1
 metadata:
-  name: arbeidsgiver-inkludering-kafka-manager
+  name: arbeidsgiver-inkludering-kafkamanager
   namespace: arbeidsgiver-inkludering
   labels:
     team: arbeidsgiver-inkludering
@@ -10,7 +10,7 @@ spec:
   port: 8080
   webproxy: true
   ingresses:
-    - https://arbeidsgiver-inkludering-kafka-manager.dev.intern.nav.no
+    - https://arbeidsgiver-inkludering-kafkamanager.dev.intern.nav.no
   prometheus:
     enabled: true
     path: /internal/prometheus
