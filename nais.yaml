@@ -46,7 +46,7 @@ spec:
         {
           "topics": [
             {
-              "name": "arbeidsgiver-inkludering.rapid",
+              "name": "toi.rapid",
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
