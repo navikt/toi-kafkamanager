@@ -6,7 +6,7 @@ metadata:
   labels:
     team: arbeidsgiver-inkludering
 spec:
-  image: ghcr.io/navikt/kafka-manager/kafka-manager:2.2021.06.08_08.54-87eab24b081e
+  image: ghcr.io/navikt/kafka-manager/kafka-manager:2.2021.09.28_14.02-a4df79a588ab
   port: 8080
   webproxy: true
   ingresses:
