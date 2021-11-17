@@ -58,7 +58,7 @@ spec:
               "valueDeserializerType": "AVRO"
             },
             {
-              "name": "toi-kandidat-1",
+              "name": "toi.kandidat-1",
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
