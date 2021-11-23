@@ -46,12 +46,6 @@ spec:
               {
                 "topics": [
                   {
-                    "name": "toi.rapid",
-                    "location": "AIVEN",
-                    "keyDeserializerType": "STRING",
-                    "valueDeserializerType": "STRING"
-                  },
-                  {
                     "name": "toi.rapid-1",
                     "location": "AIVEN",
                     "keyDeserializerType": "STRING",
@@ -62,12 +56,6 @@ spec:
                     "location": "AIVEN",
                     "keyDeserializerType": "STRING",
                     "valueDeserializerType": "AVRO"
-                  },
-                  {
-                    "name": "toi.kandidat-1",
-                    "location": "AIVEN",
-                    "keyDeserializerType": "STRING",
-                    "valueDeserializerType": "STRING"
                   },
                   {
                     "name": "toi.kandidat-2",
