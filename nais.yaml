@@ -63,7 +63,7 @@ spec:
                     "keyDeserializerType": "STRING",
                     "valueDeserializerType": "STRING"
                   },
-                                    {
+                  {
                     "name": "toi.sammenstilt-kandidat",
                     "location": "AIVEN",
                     "keyDeserializerType": "STRING",
