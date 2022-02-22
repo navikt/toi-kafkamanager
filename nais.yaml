@@ -68,6 +68,12 @@ spec:
                     "location": "AIVEN",
                     "keyDeserializerType": "STRING",
                     "valueDeserializerType": "STRING"
+                  },
+                  {
+                    "name": "toi.tillretteleggingsbehov-1",
+                    "location": "AIVEN",
+                    "keyDeserializerType": "STRING",
+                    "valueDeserializerType": "STRING"
                   }
                 ]
               }
