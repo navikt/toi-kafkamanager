@@ -1,16 +1,16 @@
 kind: Application
 apiVersion: nais.io/v1alpha1
 metadata:
-    name: arbeidsgiver-inkludering-kafkamanager
-    namespace: arbeidsgiver-inkludering
+    name: toi-kafkamanager
+    namespace: toi
     labels:
-        team: arbeidsgiver-inkludering
+        team: toi
 spec:
     image: ghcr.io/navikt/kafka-manager/kafka-manager:2.2021.12.13_10.49-62142f80d7d3
     port: 8080
     webproxy: true
     ingresses:
-        - https://arbeidsgiver-inkludering-kafkamanager.dev.intern.nav.no
+        - https://toi-kafkamanager.dev.intern.nav.no
     prometheus:
         enabled: true
         path: /internal/prometheus
