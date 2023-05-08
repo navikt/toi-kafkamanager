@@ -38,7 +38,7 @@ spec:
             tenant: nav.no
             claims:
                 groups:
-                    - id: 729012d4-2e07-43e0-9695-6042955e1269
+                    - id: 1d338ec7-6443-41fa-a11a-de2931b7fc1a
     kafka:
         pool: nav-dev
     env:
