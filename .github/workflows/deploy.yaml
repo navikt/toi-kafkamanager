@@ -1,31 +1,29 @@
 name: Deploy kafkamanager to dev
 
 on:
-    push:
-        branches:
-            - main
+  push:
+    branches:
+      - main
 
 permissions:
-    packages: write
+  packages: write
 
 jobs:
-    deploy-kafkamanager-to-dev:
-        name: Deploy kafkamanager to dev
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@master
-            - uses: nais/deploy/actions/deploy@master
-              env:
-                  APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-                  CLUSTER: dev-gcp
-                  RESOURCE: nais-dev.yaml
-    deploy-kafkamanager-to-prod:
-        name: Deploy kafkamanager to prod
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@master
-            - uses: nais/deploy/actions/deploy@master
-              env:
-                  APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-                  CLUSTER: prod-gcp
-                  RESOURCE: nais-prod.yaml
+  deploy-kafkamanager-to-dev:
+    name: Deploy kafkamanager to dev
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: nais-dev.yaml
+  deploy-kafkamanager-to-prod:
+    name: Deploy kafkamanager to prod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: nais-prod.yaml,alerts.yaml
