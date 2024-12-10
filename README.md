@@ -2,7 +2,7 @@
 
 En instans av [kafka-manager](https://github.com/navikt/kafka-manager) for å administrere topics i team Toi.
 
-Løsningen [finner du her](https://toi-kafkamanager.intern.dev.nav.no/index.html).
+Den kjørende løsningen finner du [her](https://toi-kafkamanager.intern.dev.nav.no/index.html) (for dev. Endre URL-en for prod).
 
 ## Henvendelser
 
