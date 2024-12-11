@@ -11,7 +11,7 @@ spec:
       rules:
         - alert: toi-kafkamanager
           expr: kube_deployment_status_replicas_available{deployment="toi-kafkamanager"} == 0
-          for: 1s
+          for: 2m
           annotations:
             summary: Applikasjonen er nede
             action: "https://logs.adeo.no/app/r/s/0TnLa"
