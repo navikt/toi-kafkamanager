@@ -6,7 +6,7 @@ metadata:
     labels:
         team: toi
 spec:
-    image: europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:2024.10.25-13.23-52ea038
+    image: europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:2025.03.27-09.51-fae135c
     port: 8080
     webproxy: true
     ingresses:
@@ -38,7 +38,7 @@ spec:
             tenant: nav.no
             claims:
                 groups:
-                    - id: 1d338ec7-6443-41fa-a11a-de2931b7fc1a
+                    - id: 257b88a4-a7e1-404b-af0a-16934a9f1612
     kafka:
         pool: nav-dev
     env:
