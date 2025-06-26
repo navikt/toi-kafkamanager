@@ -77,7 +77,7 @@ spec:
               "valueDeserializerType": "STRING"
             },
             {
-              "name": "dir-stilling-ekstern-v1",
+              "name": "toi.dir-stilling-ekstern-v1",
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
