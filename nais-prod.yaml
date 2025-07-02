@@ -6,6 +6,7 @@ metadata:
   labels:
     team: toi
 spec:
+
   image: europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:2025.03.27-09.51-fae135c
   port: 8080
   webproxy: true
@@ -60,12 +61,6 @@ spec:
             },
             {
               "name": "toi.kandidat-3",
-              "location": "AIVEN",
-              "keyDeserializerType": "STRING",
-              "valueDeserializerType": "STRING"
-            },
-            {
-              "name": "toi.sammenstilt-kandidat",
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
