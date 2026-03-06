@@ -58,12 +58,6 @@ spec:
               "valueDeserializerType": "AVRO"
             },
             {
-              "name": "toi.kandidat-3",
-              "location": "AIVEN",
-              "keyDeserializerType": "STRING",
-              "valueDeserializerType": "STRING"
-            },
-            {
               "name": "toi.dir-stilling-ekstern-v1",
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
