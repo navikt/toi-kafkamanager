@@ -4,6 +4,9 @@ En instans av [kafka-manager](https://github.com/navikt/kafka-manager) for å ad
 
 Den kjørende løsningen finner du [her](https://toi-kafkamanager.intern.dev.nav.no/index.html) (for dev. Endre URL-en for prod).
 
+## Kode generert av GitHub Copilot
+Dette repoet bruker GitHub Copilot til å generere kode.
+
 ## Henvendelser
 
 ### For Nav-ansatte
