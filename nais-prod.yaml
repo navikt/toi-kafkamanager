@@ -68,6 +68,12 @@ spec:
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
               "valueDeserializerType": "STRING"
+            },     
+            {
+              "name": "toi.kandidatutfall",
+              "location": "AIVEN",
+              "keyDeserializerType": "STRING",
+              "valueDeserializerType": "AVRO"
             }
           ]
         }
