@@ -52,12 +52,6 @@ spec:
               "valueDeserializerType": "STRING"
             },
             {
-              "name": "toi.rekrutteringsbistand-stilling-1",
-              "location": "AIVEN",
-              "keyDeserializerType": "STRING",
-              "valueDeserializerType": "AVRO"
-            },
-            {
               "name": "toi.dir-stilling-ekstern-v1",
               "location": "AIVEN",
               "keyDeserializerType": "STRING",
