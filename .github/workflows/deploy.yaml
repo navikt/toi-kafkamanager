@@ -1,4 +1,4 @@
-name: Deploy kafkamanager to dev
+name: Deploy kafkamanager
 
 on:
   push:
@@ -6,26 +6,84 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  id-token: write
+permissions: {}
+
+concurrency:
+  group: deploy-kafkamanager
+  cancel-in-progress: false
 
 jobs:
+  resolve-image:
+    name: Finn image-digest
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+    outputs:
+      tagged-ref: ${{ steps.image.outputs.tagged-ref }}
+      digest: ${{ steps.image.outputs.digest }}
+      image: ${{ steps.image.outputs.image }}
+    steps:
+      - uses: nais/login@bb6c3e1e14e53d40d69d0d092bd2fce2e39ae3bf # v0
+        with:
+          team: toi
+      - name: Finn digest for latest
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          repository="europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager"
+          tagged_ref="${repository}:latest"
+          digest=$(docker buildx imagetools inspect "$tagged_ref" --format '{{json .Manifest}}' | jq -er '.digest')
+          if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::Ugyldig image-digest"
+            exit 1
+          fi
+          echo "tagged-ref=$tagged_ref" >> "$GITHUB_OUTPUT"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "image=${repository}@${digest}" >> "$GITHUB_OUTPUT"
+
   deploy-kafkamanager-to-dev:
     name: Deploy kafkamanager to dev
+    needs: resolve-image
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: nais/deploy/actions/deploy@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
         env:
           CLUSTER: dev-gcp
           RESOURCE: nais-dev.yaml
+          VAR: image=${{ needs.resolve-image.outputs.image }}
 
   deploy-kafkamanager-to-prod:
     name: Deploy kafkamanager to prod
+    needs: [resolve-image, deploy-kafkamanager-to-dev]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: nais/deploy/actions/deploy@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
         env:
           CLUSTER: prod-gcp
           RESOURCE: nais-prod.yaml,alerts.yaml
+          VAR: image=${{ needs.resolve-image.outputs.image }}
+
+  lagre-image-digest:
+    name: Lagre deployet image-digest
+    needs: [resolve-image, deploy-kafkamanager-to-prod]
+    uses: navikt/toi-github-actions-workflows/.github/workflows/lagre-docker-baseimage-digest.yaml@afa1bfc2c3a1b9c58aa0e968f3c9d1dee4a4c9c7 # v17
+    with:
+      baseimage-tagged-ref: ${{ needs.resolve-image.outputs.tagged-ref }}
+      baseimage-digest: ${{ needs.resolve-image.outputs.digest }}
+    permissions: {}

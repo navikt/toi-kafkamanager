@@ -1,0 +1,17 @@
+name: Sjekk kafka-manager image
+
+on:
+  schedule:
+    - cron: '37 3 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  sjekk-image:
+    uses: navikt/toi-github-actions-workflows/.github/workflows/oppdater-docker-baseimage.yaml@afa1bfc2c3a1b9c58aa0e968f3c9d1dee4a4c9c7 # v17
+    with:
+      deploy-workflow-filnavn: deploy.yaml
+    permissions:
+      actions: write
+      id-token: write

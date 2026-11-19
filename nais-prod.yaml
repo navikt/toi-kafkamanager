@@ -6,7 +6,7 @@ metadata:
   labels:
     team: toi
 spec:
-  image: europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:2026.11.17-09.54-51ddd88 # https://console.cloud.google.com/artifacts/docker/nais-management-233d/europe-north1/poao/kafka-manager
+  image: {{ image }}
   port: 8080
   webproxy: true
   ingresses:
