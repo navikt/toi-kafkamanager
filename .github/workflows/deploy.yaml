@@ -4,7 +4,14 @@ on:
   push:
     branches:
       - main
+  schedule:
+    - cron: '37 3 * * *'
   workflow_dispatch:
+    inputs:
+      image-tag:
+        description: Kafka Manager-tag for manuell deploy eller rollback (valgfri)
+        type: string
+        required: false
 
 permissions: {}
 
@@ -14,38 +21,73 @@ concurrency:
 
 jobs:
   resolve-image:
-    name: Finn image-digest
+    name: Velg Kafka Manager-versjon
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      id-token: write
+      actions: read # Les versjonen fra siste vellykkede prod-deploy.
     outputs:
-      tagged-ref: ${{ steps.image.outputs.tagged-ref }}
-      digest: ${{ steps.image.outputs.digest }}
-      image: ${{ steps.image.outputs.image }}
+      image: ${{ steps.version.outputs.image }}
+      tag: ${{ steps.version.outputs.tag }}
+      deploy: ${{ steps.version.outputs.deploy }}
+      refresh: ${{ steps.version.outputs.refresh }}
     steps:
-      - uses: nais/login@bb6c3e1e14e53d40d69d0d092bd2fce2e39ae3bf # v0
-        with:
-          team: toi
-      - name: Finn digest for latest
-        id: image
+      - name: Finn versjon og avgjør om vi skal deploye
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_TAG: ${{ inputs.image-tag }}
         shell: bash
         run: |
           set -euo pipefail
-          repository="europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager"
-          tagged_ref="${repository}:latest"
-          digest=$(docker buildx imagetools inspect "$tagged_ref" --format '{{json .Manifest}}' | jq -er '.digest')
-          if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
-            echo "::error::Ugyldig image-digest"
-            exit 1
+
+          validate_tag() {
+            if [[ ! "$1" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}-[0-9]{2}\.[0-9]{2}-[0-9a-f]{7}$ ]]; then
+              echo "::error::Ugyldig Kafka Manager-tag ($2)"
+              exit 1
+            fi
+          }
+
+          # Bare artefakter fra main i dette repoet, ikke fra forks.
+          artifact_id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts?name=kafkamanager-prod-tag&per_page=100" |
+            jq -sr '[.[].artifacts[] | select(.name == "kafkamanager-prod-tag" and .expired == false
+              and .workflow_run.head_branch == "main"
+              and .workflow_run.head_repository_id == .workflow_run.repository_id)]
+              | max_by([.created_at, .id]).id // empty')
+          current_tag=""
+          if [[ -n "$artifact_id" ]]; then
+            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > "$RUNNER_TEMP/kafkamanager-prod-tag.zip"
+            current_tag=$(unzip -p "$RUNNER_TEMP/kafkamanager-prod-tag.zip" tag.txt)
+            validate_tag "$current_tag" artefakt
+          else
+            echo "::notice::Fant ingen lagret prod-versjon. Bruker siste release."
           fi
-          echo "tagged-ref=$tagged_ref" >> "$GITHUB_OUTPUT"
-          echo "digest=$digest" >> "$GITHUB_OUTPUT"
-          echo "image=${repository}@${digest}" >> "$GITHUB_OUTPUT"
+
+          deploy=true
+          refresh=false
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch && -n "$REQUESTED_TAG" ]]; then
+            tag="$REQUESTED_TAG"
+            validate_tag "$tag" manuelt
+          elif [[ "$GITHUB_EVENT_NAME" == schedule || -z "$current_tag" ]]; then
+            tag=$(gh api repos/navikt/kafka-manager/releases/latest --jq '.tag_name')
+            validate_tag "$tag" release
+            if [[ "$GITHUB_EVENT_NAME" == schedule && "$tag" == "$current_tag" ]]; then
+              deploy=false
+              refresh=true
+            fi
+          else
+            tag="$current_tag"
+          fi
+
+          printf 'tag=%s\nimage=europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:%s\ndeploy=%s\nrefresh=%s\n' \
+            "$tag" "$tag" "$deploy" "$refresh" >> "$GITHUB_OUTPUT"
+          printf 'Kafka Manager: `%s` (deploy: `%s`)\n' "$tag" "$deploy" >> "$GITHUB_STEP_SUMMARY"
 
   deploy-kafkamanager-to-dev:
     name: Deploy kafkamanager to dev
     needs: resolve-image
+    if: needs.resolve-image.outputs.deploy == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -60,6 +102,7 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: nais-dev.yaml
           VAR: image=${{ needs.resolve-image.outputs.image }}
+          WAIT: 'true'
 
   deploy-kafkamanager-to-prod:
     name: Deploy kafkamanager to prod
@@ -78,12 +121,27 @@ jobs:
           CLUSTER: prod-gcp
           RESOURCE: nais-prod.yaml,alerts.yaml
           VAR: image=${{ needs.resolve-image.outputs.image }}
+          WAIT: 'true'
 
-  lagre-image-digest:
-    name: Lagre deployet image-digest
+  save-image-tag:
+    name: Lagre prod-versjon
     needs: [resolve-image, deploy-kafkamanager-to-prod]
-    uses: navikt/toi-github-actions-workflows/.github/workflows/lagre-docker-baseimage-digest.yaml@0fa0ff10d4384c3cf376479bb9aa6ba0517144ee # v17
-    with:
-      baseimage-tagged-ref: ${{ needs.resolve-image.outputs.tagged-ref }}
-      baseimage-digest: ${{ needs.resolve-image.outputs.digest }}
+    if: >-
+      ${{ !cancelled() && needs.resolve-image.result == 'success' &&
+          (needs.deploy-kafkamanager-to-prod.result == 'success' ||
+           (needs.deploy-kafkamanager-to-prod.result == 'skipped' && needs.resolve-image.outputs.refresh == 'true')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions: {}
+    steps:
+      - name: Skriv prod-versjon
+        env:
+          IMAGE_TAG: ${{ needs.resolve-image.outputs.tag }}
+        run: printf '%s\n' "$IMAGE_TAG" > tag.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: kafkamanager-prod-tag
+          path: tag.txt
+          if-no-files-found: error
+          retention-days: 90
+          overwrite: true
