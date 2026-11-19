@@ -82,7 +82,7 @@ jobs:
   lagre-image-digest:
     name: Lagre deployet image-digest
     needs: [resolve-image, deploy-kafkamanager-to-prod]
-    uses: navikt/toi-github-actions-workflows/.github/workflows/lagre-docker-baseimage-digest.yaml@afa1bfc2c3a1b9c58aa0e968f3c9d1dee4a4c9c7 # v17
+    uses: navikt/toi-github-actions-workflows/.github/workflows/lagre-docker-baseimage-digest.yaml@0fa0ff10d4384c3cf376479bb9aa6ba0517144ee # v17
     with:
       baseimage-tagged-ref: ${{ needs.resolve-image.outputs.tagged-ref }}
       baseimage-digest: ${{ needs.resolve-image.outputs.digest }}
