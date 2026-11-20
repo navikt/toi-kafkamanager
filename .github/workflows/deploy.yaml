@@ -104,6 +104,8 @@ jobs:
   deploy-kafkamanager-to-prod:
     name: Deploy kafkamanager to prod
     needs: [resolve-image, deploy-kafkamanager-to-dev]
+    outputs:
+      tag: ${{ needs.resolve-image.outputs.tag }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -122,17 +124,14 @@ jobs:
 
   save-image-tag:
     name: Lagre prod-versjon
-    needs: [resolve-image, deploy-kafkamanager-to-prod]
-    if: >-
-      ${{ !cancelled() && needs.resolve-image.result == 'success' &&
-          needs.deploy-kafkamanager-to-prod.result == 'success' }}
+    needs: [deploy-kafkamanager-to-prod]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
     steps:
       - name: Skriv prod-versjon
         env:
-          IMAGE_TAG: ${{ needs.resolve-image.outputs.tag }}
+          IMAGE_TAG: ${{ needs.deploy-kafkamanager-to-prod.outputs.tag }}
         run: printf '%s\n' "$IMAGE_TAG" > tag.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
