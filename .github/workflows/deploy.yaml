@@ -31,7 +31,6 @@ jobs:
       image: ${{ steps.version.outputs.image }}
       tag: ${{ steps.version.outputs.tag }}
       deploy: ${{ steps.version.outputs.deploy }}
-      refresh: ${{ steps.version.outputs.refresh }}
     steps:
       - name: Finn versjon og avgjør om vi skal deploye
         id: version
@@ -65,23 +64,21 @@ jobs:
           fi
 
           deploy=true
-          refresh=false
           if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch && -n "$REQUESTED_TAG" ]]; then
             tag="$REQUESTED_TAG"
             validate_tag "$tag" manuelt
-          elif [[ "$GITHUB_EVENT_NAME" == schedule || -z "$current_tag" ]]; then
+          elif [[ "$GITHUB_EVENT_NAME" == push || "$GITHUB_EVENT_NAME" == workflow_dispatch || "$GITHUB_EVENT_NAME" == schedule || -z "$current_tag" ]]; then
             tag=$(gh api repos/navikt/kafka-manager/releases/latest --jq '.tag_name')
             validate_tag "$tag" release
             if [[ "$GITHUB_EVENT_NAME" == schedule && "$tag" == "$current_tag" ]]; then
               deploy=false
-              refresh=true
             fi
           else
             tag="$current_tag"
           fi
 
-          printf 'tag=%s\nimage=europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:%s\ndeploy=%s\nrefresh=%s\n' \
-            "$tag" "$tag" "$deploy" "$refresh" >> "$GITHUB_OUTPUT"
+          printf 'tag=%s\nimage=europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:%s\ndeploy=%s\n' \
+            "$tag" "$tag" "$deploy" >> "$GITHUB_OUTPUT"
           printf 'Kafka Manager: `%s` (deploy: `%s`)\n' "$tag" "$deploy" >> "$GITHUB_STEP_SUMMARY"
 
   deploy-kafkamanager-to-dev:
@@ -128,8 +125,7 @@ jobs:
     needs: [resolve-image, deploy-kafkamanager-to-prod]
     if: >-
       ${{ !cancelled() && needs.resolve-image.result == 'success' &&
-          (needs.deploy-kafkamanager-to-prod.result == 'success' ||
-           (needs.deploy-kafkamanager-to-prod.result == 'skipped' && needs.resolve-image.outputs.refresh == 'true')) }}
+          needs.deploy-kafkamanager-to-prod.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
