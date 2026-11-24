@@ -97,7 +97,6 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: nais-dev.yaml
           VAR: image=${{ needs.resolve-image.outputs.image }}
-          WAIT: 'true'
 
   deploy-kafkamanager-to-prod:
     name: Deploy kafkamanager to prod
@@ -118,7 +117,6 @@ jobs:
           CLUSTER: prod-gcp
           RESOURCE: nais-prod.yaml,alerts.yaml
           VAR: image=${{ needs.resolve-image.outputs.image }}
-          WAIT: 'true'
 
   save-image-tag:
     name: Lagre prod-versjon
