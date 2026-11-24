@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       requestedTag:
-        description: Kafka-manager tag for versjonen du ønsker å deploye (tom gir nyeste versjon)
+        description: Versjonen av Kafka Manager du ønsker å deploye, i form av en Git-tag (tom gir nyeste versjon)
         type: string
         required: false
 
