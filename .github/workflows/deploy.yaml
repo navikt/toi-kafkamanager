@@ -13,7 +13,7 @@ on:
         type: string
         required: false
 
-permissions: {}
+permissions: { }
 
 concurrency:
   group: deploy-kafkamanager
@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   resolve-image:
-    name: Velg Kafka Manager-versjon
+    name: Avgjør om vi skal deploye og i så fall hvilken versjon
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -32,7 +32,7 @@ jobs:
       shouldDeployTag: ${{ steps.version.outputs.shouldDeployTag }}
       shouldDeploy: ${{ steps.version.outputs.shouldDeploy }}
     steps:
-      - name: Avgjør om vi skal deploye og i så fall hvilken versjon
+      - name:
         id: version
         env:
           GH_TOKEN: ${{ github.token }}
@@ -52,8 +52,8 @@ jobs:
           }
 
           load_previously_deployed_tag() {
-            local artifact_id
             # Bare artefakter fra main i dette repoet, ikke fra forks.
+            local artifact_id
             artifact_id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts?name=kafkamanager-prod-tag&per_page=100" |
               jq -sr '[.[].artifacts[] | select(.name == "kafkamanager-prod-tag" and .expired == false
                 and .workflow_run.head_branch == "main"
@@ -73,6 +73,7 @@ jobs:
             shouldDeployTag="$requestedTag"
           else
             latestVersionTag=$(gh api repos/navikt/kafka-manager/releases/latest --jq '.tag_name')
+            validate_tag "$latestVersionTag"
             previouslyDeployedTag=$(load_previously_deployed_tag)
             if [[ "$GITHUB_EVENT_NAME" == schedule && "$latestVersionTag" == "$previouslyDeployedTag" ]]; then
                 shouldDeploy=false
@@ -89,7 +90,7 @@ jobs:
               printf 'image=europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:%s\n' "$shouldDeployTag"
             fi
           } >> "$GITHUB_OUTPUT"
-        
+          
           {
             printf 'shouldDeploy: `%s`\n' "$shouldDeploy"
             if [[ "$shouldDeploy" == true ]]; then
@@ -97,8 +98,8 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-  deploy-kafkamanager-to-dev:
-    name: Deploy kafkamanager to dev
+  deploy-to-dev:
+    name: Deploy til dev
     needs: resolve-image
     if: needs.resolve-image.outputs.shouldDeploy == 'true'
     runs-on: ubuntu-latest
@@ -116,9 +117,9 @@ jobs:
           RESOURCE: nais-dev.yaml
           VAR: image=${{ needs.resolve-image.outputs.image }}
 
-  deploy-kafkamanager-to-prod:
-    name: Deploy kafkamanager to prod
-    needs: [resolve-image, deploy-kafkamanager-to-dev]
+  deploy-to-prod:
+    name: Deploy til prod
+    needs: [ resolve-image, deploy-to-dev ]
     outputs:
       shouldDeployTag: ${{ needs.resolve-image.outputs.shouldDeployTag }}
     runs-on: ubuntu-latest
@@ -136,17 +137,17 @@ jobs:
           RESOURCE: nais-prod.yaml,alerts.yaml
           VAR: image=${{ needs.resolve-image.outputs.image }}
 
-  save-image-tag:
-    name: Lagre prod-versjon
-    needs: [deploy-kafkamanager-to-prod]
+  save-version-tag:
+    name: Lagre hvilken versjon som ble deployet til prod
+    needs: [ deploy-to-prod ]
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    permissions: {}
+    permissions: { }
     steps:
-      - name: Skriv prod-versjon
+      - name: Skriv versjons-tag til fil
         env:
-          shouldDeployTag: ${{ needs.deploy-kafkamanager-to-prod.outputs.shouldDeployTag }}
-        run: printf '%s\n' "$shouldDeployTag" > tag.txt
+          deployedTag: ${{ needs.deploy-to-prod.outputs.shouldDeployTag }}
+        run: printf '%s\n' "$deployedTag" > tag.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: kafkamanager-prod-tag
