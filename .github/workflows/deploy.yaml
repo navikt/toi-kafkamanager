@@ -46,7 +46,7 @@ jobs:
               local escapedTag="${1//%/%25}"
               escapedTag="${escapedTag//$'\r'/%0D}"
               escapedTag="${escapedTag//$'\n'/%0A}"
-              echo "::error::Ugyldig Kafka-manager versjons-tag '$escapedTag' ($2)"
+              echo "::error::Ugyldig Kafka-manager versjons-tag '$escapedTag'"
               exit 1
             fi
           }
@@ -68,7 +68,7 @@ jobs:
           }
 
           if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch && -n "$requestedTag" ]]; then
-            validate_tag "$requestedTag" manuelt
+            validate_tag "$requestedTag"
             shouldDeploy=true
             shouldDeployTag="$requestedTag"
           else
