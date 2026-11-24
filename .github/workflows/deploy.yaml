@@ -76,9 +76,15 @@ jobs:
             fi
           fi
 
-          printf 'shouldDeployTag=%s\nimage=europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:%s\nshouldDeploy=%s\n' \
-            "$shouldDeployTag" "$shouldDeployTag" "$shouldDeploy" >> "$GITHUB_OUTPUT"
-          printf 'Kafka-manager versjon: `%s`\nshouldDeploy: `%s`\n' "$shouldDeployTag" "$shouldDeploy" >> "$GITHUB_STEP_SUMMARY"
+          {
+            printf 'shouldDeploy=%s\n' "$shouldDeploy"
+            printf 'shouldDeployTag=%s\n' "$shouldDeployTag"
+            printf 'image=europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:%s\n' "$shouldDeployTag"
+          } >> "$GITHUB_OUTPUT"
+          {
+            printf 'Kafka-manager versjon: `%s`\n' "$shouldDeployTag"
+            printf 'shouldDeploy: `%s`\n' "$shouldDeploy"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   deploy-kafkamanager-to-dev:
     name: Deploy kafkamanager to dev
