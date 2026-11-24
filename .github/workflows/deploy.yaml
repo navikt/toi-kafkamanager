@@ -43,47 +43,58 @@ jobs:
 
           validate_tag() {
             if [[ ! "$1" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}-[0-9]{2}\.[0-9]{2}-[0-9a-f]{7}$ ]]; then
-              echo "::error::Ugyldig Kafka Manager versjons-tag ($2)"
+              local escapedTag="${1//%/%25}"
+              escapedTag="${escapedTag//$'\r'/%0D}"
+              escapedTag="${escapedTag//$'\n'/%0A}"
+              echo "::error::Ugyldig Kafka-manager versjons-tag '$escapedTag' ($2)"
               exit 1
             fi
           }
 
-          # Bare artefakter fra main i dette repoet, ikke fra forks.
-          artifact_id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts?name=kafkamanager-prod-tag&per_page=100" |
-            jq -sr '[.[].artifacts[] | select(.name == "kafkamanager-prod-tag" and .expired == false
-              and .workflow_run.head_branch == "main"
-              and .workflow_run.head_repository_id == .workflow_run.repository_id)]
-              | max_by([.created_at, .id]).id // empty')
-          previouslyDeployedTag=""
-          if [[ -n "$artifact_id" ]]; then
-            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > "$RUNNER_TEMP/kafkamanager-prod-tag.zip"
-            previouslyDeployedTag=$(unzip -p "$RUNNER_TEMP/kafkamanager-prod-tag.zip" tag.txt)
-            validate_tag "$previouslyDeployedTag" artefakt
-          else
-            echo "::notice::Fant ingen lagret versjons-tag fra tidligere deploy. Bruker nyeste release-versjon."
-          fi
+          load_previously_deployed_tag() {
+            local artifact_id
+            # Bare artefakter fra main i dette repoet, ikke fra forks.
+            artifact_id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts?name=kafkamanager-prod-tag&per_page=100" |
+              jq -sr '[.[].artifacts[] | select(.name == "kafkamanager-prod-tag" and .expired == false
+                and .workflow_run.head_branch == "main"
+                and .workflow_run.head_repository_id == .workflow_run.repository_id)]
+                | max_by([.created_at, .id]).id // empty') || return $?
+            if [[ -n "$artifact_id" ]]; then
+              gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > "$RUNNER_TEMP/kafkamanager-prod-tag.zip" || return $?
+              unzip -p "$RUNNER_TEMP/kafkamanager-prod-tag.zip" tag.txt
+            else
+              echo "::notice::Fant ingen lagret versjons-tag fra tidligere deploy." >&2
+            fi
+          }
 
-          shouldDeploy=true
           if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch && -n "$requestedTag" ]]; then
+            validate_tag "$requestedTag" manuelt
+            shouldDeploy=true
             shouldDeployTag="$requestedTag"
-            validate_tag "$shouldDeployTag" manuelt
           else
             latestVersionTag=$(gh api repos/navikt/kafka-manager/releases/latest --jq '.tag_name')
-            validate_tag "$latestVersionTag" release
-            shouldDeployTag="$latestVersionTag"
+            previouslyDeployedTag=$(load_previously_deployed_tag)
             if [[ "$GITHUB_EVENT_NAME" == schedule && "$latestVersionTag" == "$previouslyDeployedTag" ]]; then
-              shouldDeploy=false
+                shouldDeploy=false
+            else
+              shouldDeploy=true
+              shouldDeployTag="$latestVersionTag"
             fi
           fi
 
           {
             printf 'shouldDeploy=%s\n' "$shouldDeploy"
-            printf 'shouldDeployTag=%s\n' "$shouldDeployTag"
-            printf 'image=europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:%s\n' "$shouldDeployTag"
+            if [[ "$shouldDeploy" == true ]]; then
+              printf 'shouldDeployTag=%s\n' "$shouldDeployTag"
+              printf 'image=europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:%s\n' "$shouldDeployTag"
+            fi
           } >> "$GITHUB_OUTPUT"
+          
           {
-            printf 'Kafka-manager versjon: `%s`\n' "$shouldDeployTag"
             printf 'shouldDeploy: `%s`\n' "$shouldDeploy"
+            if [[ "$shouldDeploy" == true ]]; then
+              printf 'Kafka-manager versjon: `%s`\n' "$shouldDeployTag"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
   deploy-kafkamanager-to-dev:
