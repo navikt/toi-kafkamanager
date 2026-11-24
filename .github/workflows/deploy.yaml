@@ -30,7 +30,7 @@ jobs:
     outputs:
       image: ${{ steps.version.outputs.image }}
       tag: ${{ steps.version.outputs.tag }}
-      deploy: ${{ steps.version.outputs.deploy }}
+      shouldDeploy: ${{ steps.version.outputs.shouldDeploy }}
     steps:
       - name: Finn versjon og avgjør om vi skal deploye
         id: version
@@ -63,7 +63,7 @@ jobs:
             echo "::notice::Fant ingen lagret prod-versjon. Bruker siste release."
           fi
 
-          deploy=true
+          shouldDeploy=true
           if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch && -n "$REQUESTED_TAG" ]]; then
             tag="$REQUESTED_TAG"
             validate_tag "$tag" manuelt
@@ -71,18 +71,18 @@ jobs:
             tag=$(gh api repos/navikt/kafka-manager/releases/latest --jq '.tag_name')
             validate_tag "$tag" release
             if [[ "$GITHUB_EVENT_NAME" == schedule && "$tag" == "$current_tag" ]]; then
-              deploy=false
+              shouldDeploy=false
             fi
           fi
 
-          printf 'tag=%s\nimage=europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:%s\ndeploy=%s\n' \
-            "$tag" "$tag" "$deploy" >> "$GITHUB_OUTPUT"
-          printf 'Kafka Manager: `%s` (deploy: `%s`)\n' "$tag" "$deploy" >> "$GITHUB_STEP_SUMMARY"
+          printf 'tag=%s\nimage=europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:%s\nshouldDeploy=%s\n' \
+            "$tag" "$tag" "$shouldDeploy" >> "$GITHUB_OUTPUT"
+          printf 'Kafka Manager: `%s` (shouldDeploy: `%s`)\n' "$tag" "$shouldDeploy" >> "$GITHUB_STEP_SUMMARY"
 
   deploy-kafkamanager-to-dev:
     name: Deploy kafkamanager to dev
     needs: resolve-image
-    if: needs.resolve-image.outputs.deploy == 'true'
+    if: needs.resolve-image.outputs.shouldDeploy == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
