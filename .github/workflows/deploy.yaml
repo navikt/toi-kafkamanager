@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       requestedTag:
-        description: Kafka Manager versjons-tag for manuell deploy (tom) eller rollback (angi versjons-tag)
+        description: Kafka-manager tag for versjonen du ønsker å deploye (tom gir nyeste versjon)
         type: string
         required: false
 
@@ -89,7 +89,7 @@ jobs:
               printf 'image=europe-north1-docker.pkg.dev/nais-management-233d/poao/kafka-manager:%s\n' "$shouldDeployTag"
             fi
           } >> "$GITHUB_OUTPUT"
-          
+        
           {
             printf 'shouldDeploy: `%s`\n' "$shouldDeploy"
             if [[ "$shouldDeploy" == true ]]; then
